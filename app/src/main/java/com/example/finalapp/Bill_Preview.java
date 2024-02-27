@@ -19,9 +19,19 @@ public class Bill_Preview extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bill_preview);
+        pdfView = findViewById(R.id.pdfView);
 
+        btnPrint = findViewById(R.id.btnPrint);
 
-        /*btnPrint.setOnClickListener(new View.OnClickListener() {
+        // Get the PDF file path from the intent
+        //String filePath = getIntent().getStringExtra("PDF_PATH");
+
+        // Load and display the PDF file
+        /*pdfView.fromFile(new File(filePath))
+                .enableSwipe(true) // Allows to swipe pages horizontally
+                .load();*/
+
+        btnPrint.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = getPackageManager().getLaunchIntentForPackage("com.dynamixsoftware.printershare");
@@ -35,6 +45,6 @@ public class Bill_Preview extends AppCompatActivity {
                 }
 
             }
-        });*/
+        });
     }
 }
