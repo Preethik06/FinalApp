@@ -2,7 +2,7 @@
 <resources>
     <color name="DarkPrimaryColor">#303F9F</color> //purple_700
     <color name="PrimaryColor">#3F51B5</color> //purple_500
-    <color name="LightPrimaryColor">#C5CAE9</color> //teal_200
+    <color name="LightPrimaryColor">#D5D9F1</color> //teal_200
     <color name="AccentColor">#7C4DFF</color> //purple_200
     <color name="black">#212121</color> //Primary Text Color
     <color name="SecondaryTextColor">#757575</color> //teal_700
