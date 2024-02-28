@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     public void onClick(View view){
         // Display a record from the Student table
         if (view == btn_login) {
-            // Checking for empty roll number
+            // Checking for empty email and pass
             if (et_email.getText().toString().trim().length() == 0) {
                 if (et_password.getText().toString().trim().length() == 0){
                     showMessage("Error", "Please enter Email and Password");
@@ -44,8 +44,6 @@ public class MainActivity extends AppCompatActivity {
             Cursor c = db.rawQuery("SELECT * FROM users WHERE email='" + et_email.getText() + "'", null);
             Cursor c2 = db.rawQuery("SELECT * FROM users WHERE pass='" + et_password.getText() + "'", null);
             if (c.moveToFirst() && c2.moveToFirst()) {
-                //et_password.setText(c.getString(1));
-                //Marks.setText(c.getString(2));
                 Toast.makeText(getApplicationContext(),"Login Successfull", Toast.LENGTH_SHORT).show();
                 Intent i=new Intent(MainActivity.this,Home.class);
                 finish();
@@ -67,7 +65,6 @@ public class MainActivity extends AppCompatActivity {
     public void clearText() {
         et_email.setText("");
         et_password.setText("");
-        //Marks.setText("");
         et_email.requestFocus();
     }
 }

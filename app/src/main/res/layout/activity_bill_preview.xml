@@ -61,11 +61,11 @@
     </androidx.cardview.widget.CardView>
 
     <Button
-        android:id="@+id/btnDownload"
+        android:id="@+id/btnBackDetails"
         android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="40dp"
-        android:text="Download"
+        android:text="Back to Details"
         android:backgroundTint="@color/DarkPrimaryColor"
         app:cornerRadius="?android:attr/buttonCornerRadius"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -82,7 +82,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.383"
-        app:layout_constraintStart_toEndOf="@+id/btnDownload"
+        app:layout_constraintStart_toEndOf="@+id/btnBackDetails"
         app:layout_constraintTop_toBottomOf="@+id/cardView" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

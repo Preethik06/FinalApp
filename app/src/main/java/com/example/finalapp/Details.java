@@ -1,7 +1,5 @@
 package com.example.finalapp;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -18,9 +16,11 @@ import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import java.util.ArrayList;
 
-public class Details extends AppCompatActivity {
+public class Details extends AppCompatActivity{
     EditText et_meter_no, et_name;
     Button btn_submit;
     ImageView back_icon;
@@ -29,6 +29,7 @@ public class Details extends AppCompatActivity {
     SearchView searchView;
     ListView listView;
     ArrayAdapter<String> adapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,6 +42,7 @@ public class Details extends AppCompatActivity {
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>());
         listView.setAdapter(adapter);
         listView.setVisibility(View.GONE);
+
         back_icon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -53,7 +55,6 @@ public class Details extends AppCompatActivity {
         db = openOrCreateDatabase("BillDB", Context.MODE_PRIVATE, null);
         db.execSQL("CREATE TABLE IF NOT EXISTS customers(meter_no VARCHAR, ca_no VARCHAR, name VARCHAR, address VARCHAR, email VARCHAR, phone_no int, charges_id VARCHAR);");
 
-        //Search
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -70,7 +71,7 @@ public class Details extends AppCompatActivity {
             }
         });
 
-        // Assuming you have a ListView named listView
+        //Search
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -98,11 +99,13 @@ public class Details extends AppCompatActivity {
                 } else {
                     showMessage("Error", "Invalid Meter Number or Name");
                 }
-                //ends fetching code
             }
         });
+
+        // Also, you might want to set a text filter for the ListView
         listView.setTextFilterEnabled(true);
-        //search end
+
+
         //btn_submit.setOnClickListener(this);
     }
     private void search(String keyword) {

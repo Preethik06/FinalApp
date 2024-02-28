@@ -1,11 +1,10 @@
 package com.example.finalapp;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Environment;
@@ -15,6 +14,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -31,14 +32,15 @@ import com.itextpdf.layout.property.UnitValue;
 
 import java.io.FileNotFoundException;
 
-public class Bill extends AppCompatActivity {
+public class Bill extends AppCompatActivity implements View.OnClickListener {
     TextView tv_meter_no, tv_ca_no, tv_name;
     String meter, ca, name, previous;
     EditText meter_reading;
     Button btn_generate;
     ImageView back_icon;
     SQLiteDatabase db;
-    String c_name;
+    String c_name, c_meter, c_ca_no, c_address, c_tel, c_email;
+    String c2_curr, c2_prev, c2_diff, c2_total_amt;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,7 +63,7 @@ public class Bill extends AppCompatActivity {
 
         // Creating database and table
         db = openOrCreateDatabase("BillDB", Context.MODE_PRIVATE, null);
-        db.execSQL("CREATE TABLE IF NOT EXISTS customers(meter_no VARCHAR, name VARCHAR, ca_no VARCHAR, curr_reading INTEGER);");
+        db.execSQL("CREATE TABLE IF NOT EXISTS bill_details(meter_no VARCHAR, prev_reading INTEGER, curr_reading INTEGER, total_amt VARCHAR);");
 
         //Displaying Details (meter no., cano., name)
         Intent i=getIntent();
@@ -81,43 +83,70 @@ public class Bill extends AppCompatActivity {
             Toast.makeText(getApplicationContext(),"Prev Reading Modified",Toast.LENGTH_SHORT).show();
         }
 
-        btn_generate.setOnClickListener(this::onClick);
+        btn_generate.setOnClickListener(this);
     }
+    //Inserting/updating current meter reading
     public void onClick(View view){
-        if (meter.length() == 0) {
-            showMessage("Error", "Meter number not valid");
-            return;
-        }
-        Cursor c = db.rawQuery("SELECT * FROM bill_details WHERE meter_no='" + meter + "'", null);
-        if (c.moveToFirst()) {
-            db.execSQL("UPDATE bill_details SET curr_reading='" + meter_reading.getText() + "'WHERE meter_no='" + meter +"' ");
-            showMessage("Success", "Record Modified");
-            Intent intent=new Intent(getApplicationContext(),Bill_Preview.class);
-            startActivity(intent);
+        if (view == btn_generate) {
+            // Checking for empty roll number
+            if (meter.length() == 0) {
+                showMessage("Error", "Meter number not valid");
+                return;
+            }
+            Cursor c = db.rawQuery("SELECT * FROM bill_details WHERE meter_no='" + meter + "'", null);
+            if (c.moveToFirst()) {
+                db.execSQL("UPDATE bill_details SET curr_reading='" + meter_reading.getText() + "'WHERE meter_no='" + meter +"' ");
+                    showMessage("Success", "Record Modified");
 
-            //Calculation----> Kaushal
+                //Calculation----> Kaushal
 
-            int n1 = Integer.parseInt(c.getString(1));//previous reading
-            int n2 = Integer.parseInt(c.getString(2));//current reading
-            int unit = n2 - n1;
-            double billAmount = calculateElectricityBill(unit);
+                int n1 = Integer.valueOf(c.getString(1));//previous reading
+                int n2 = Integer.valueOf(c.getString(2));//current reading
+                //int unit =n2 - n1;
 
-            String name = c.getString(1);
-            String meterNo = c.getString(0);
-            String caNo = c.getString(2);
-            String address = "Ponda";
-            String currentReading = c.getString(4);//"2345";
-            String total = String.valueOf(billAmount);
+                Cursor c2 = db.rawQuery("SELECT * FROM bill_details WHERE meter_no='" + meter + "'", null);
+                if (c2.moveToFirst()) {
+                    c2_curr=c2.getString(2);
+                    c2_prev=c2.getString(1);
+                    int curr=Integer.valueOf(c2_curr);
+                    int prev=Integer.valueOf(c2_prev);
+                    int unit =curr - prev;
+                    c2_diff= String.valueOf(curr-prev);
+                    c2_total_amt=c2.getString(3);
 
+                    Toast.makeText(getApplicationContext(),"unit diff"+unit,Toast.LENGTH_SHORT).show();
+                    double billAmount = calculateElectricityBill(unit);
+                    Toast.makeText(getApplicationContext(),"Amt"+billAmount,Toast.LENGTH_SHORT).show();
+                    
+                    try {
+                        // Assuming db is your SQLiteDatabase instance
+                        String total = String.valueOf(billAmount);
+                        String updateQuery = "UPDATE bill_details SET total_amt=? WHERE meter_no=?";
+
+                        // Using parameterized query to prevent SQL injection
+                        db.execSQL(updateQuery, new Object[]{total, meter});
+
+                        // Success message or further processing
+                        // ...
+                    } catch (SQLException e) {
+                        // Handle the exception appropriately (e.g., log or show an error message)
+                        e.printStackTrace();
+                }
+
+                }else {
+                    showMessage("Error", "Invalid Meter Number");
+                    clearText();
+                }
+                clearText();
+
+            } else {
+                showMessage("Error", "Invalid Value");
+            }
             clearText();
 
-        } else {
-            showMessage("Error", "Invalid Value");
+            // Generate PDF
+            generatePDF();
         }
-        clearText();
-
-        // Generate PDF
-        generatePDF();
     }
     public void showMessage(String title, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -130,7 +159,7 @@ public class Bill extends AppCompatActivity {
     public void clearText() {
         meter_reading.setText("");
     }
-
+    //Kaushal
     private void generatePDF() {
 
         if (meter.toString().trim().length() == 0) {
@@ -138,10 +167,28 @@ public class Bill extends AppCompatActivity {
             return;
         }
         Cursor c = db.rawQuery("SELECT * FROM customers WHERE meter_no='" + meter + "'", null);
+        Cursor c2 = db.rawQuery("SELECT * FROM bill_details WHERE meter_no='" + meter + "'", null);
         if (c.moveToFirst()) {
+            c_meter=c.getString(0);
             c_name=c.getString(2);
+            c_ca_no=c.getString(1);
+            c_address=c.getString(3);
+            c_tel=c.getString(5);
+            c_email=c.getString(4);
         } else {
-            showMessage("Error", "Invalid Rollno");
+            showMessage("Error", "Invalid Meter Number");
+            clearText();
+        }
+
+        if (c2.moveToFirst()) {
+            c2_curr=c2.getString(2);
+            c2_prev=c2.getString(1);
+            int curr=Integer.valueOf(c2_curr);
+            int prev=Integer.valueOf(c2_prev);
+            c2_diff= String.valueOf(curr-prev);
+            c2_total_amt=c2.getString(3);
+        }else {
+            showMessage("Error", "Invalid Meter Number");
             clearText();
         }
 
@@ -196,7 +243,7 @@ public class Bill extends AppCompatActivity {
             Paragraph UValue = new Paragraph();
             Paragraph SValue = new Paragraph();
             Paragraph TValue = new Paragraph();
-            MValue.add("1234");
+            MValue.add(c_meter);
             UValue.add("KWH");
             SValue.add("2.62kw");
             TValue.add("LTD");
@@ -252,9 +299,9 @@ public class Bill extends AppCompatActivity {
             Paragraph BTValue = new Paragraph();
             Paragraph MRValue = new Paragraph();
             BNValue.add("1234");
-            BDValue.add("23/01/2023");
+            BDValue.add("28/02/2024");
             BTValue.add("12:45 PM");
-            MRValue.add("xyz");
+            MRValue.add("abc@gmail.com");
 
             // Add headers to the table
             table2.addCell(new Cell(1,1).add(Bill_NO).setBold().setBorder(Border.NO_BORDER));
@@ -292,7 +339,8 @@ public class Bill extends AppCompatActivity {
             //Add CA NO
             paragraph1.add(new Text("CA No ").setBold());
             paragraph1.add("         ");
-            paragraph1.add("1234\n");
+            paragraph1.add(c_ca_no);
+            paragraph1.add("\n");
 
             //Add Name
             paragraph1.add(new Text("Name ").setBold());
@@ -303,17 +351,20 @@ public class Bill extends AppCompatActivity {
             //Add Address
             paragraph1.add(new Text("Address ").setBold());
             paragraph1.add("      ");
-            paragraph1.add("Goa\n");
+            paragraph1.add(c_address);
+            paragraph1.add("\n");
 
             //Add Tel
             paragraph1.add(new Text("Tel ").setBold());
             paragraph1.add("              ");
-            paragraph1.add("1234567890\n");
+            paragraph1.add(c_tel);
+            paragraph1.add("\n");
 
             //Add Email
             paragraph1.add(new Text("Email Id ").setBold());
             paragraph1.add("      ");
-            paragraph1.add("xyz@gmail.com\n\n");
+            paragraph1.add(c_email);
+            paragraph1.add("\n\n");
 
             // Add the paragraph to the document
             document.add(paragraph1);
@@ -342,8 +393,8 @@ public class Bill extends AppCompatActivity {
             Paragraph FromValue = new Paragraph();
             Paragraph T0Value = new Paragraph();
             Paragraph DaysValue = new Paragraph();
-            FromValue.add("01/01/2023");
-            T0Value.add("31/01/2023");
+            FromValue.add("15/01/2024");
+            T0Value.add("15/02/2024");
             DaysValue.add("31");
 
             // Add headers to the table
@@ -399,12 +450,12 @@ public class Bill extends AppCompatActivity {
             Paragraph MeterRentValue = new Paragraph();
             Paragraph PrevPendingAmountValue = new Paragraph();
 
-            CurrentValue.add("2080");
-            PrevValue.add("2050");
-            UnitDiffValue.add("30");
+            CurrentValue.add(c2_curr);
+            PrevValue.add(c2_prev);
+            UnitDiffValue.add(c2_diff);
             FixedChargeValue.add("10");
             MeterRentValue.add("10");
-            PrevPendingAmountValue.add("300");
+            PrevPendingAmountValue.add("0");
 
             // Add headers to the table
             table4.addCell(new Cell(1,1).add(Current_Reading).setBold().setBorder(Border.NO_BORDER).setTextAlignment(TextAlignment.LEFT));
@@ -463,8 +514,8 @@ public class Bill extends AppCompatActivity {
             // Add data rows to the table
             Paragraph Due_DateValue = new Paragraph();
             Paragraph TotalValue = new Paragraph();
-            Due_DateValue.add("20/02/2023");
-            TotalValue.add("1500");
+            Due_DateValue.add("10/03/2024");
+            TotalValue.add(c2_total_amt);
 
             // Add headers to the table
             table5.addCell(new Cell(1,1).add(Due_Date).setBold().setBorder(Border.NO_BORDER)/*.setTextAlignment(TextAlignment.LEFT)*/);
@@ -493,7 +544,7 @@ public class Bill extends AppCompatActivity {
 
     //Calculation
     private double calculateElectricityBill(int unit) {
-        double billAmount = 0;
+        double billAmount=0;
         int slab;
         switch (unit / 100) {
             case 0:
