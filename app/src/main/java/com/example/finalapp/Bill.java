@@ -31,6 +31,10 @@ import com.itextpdf.layout.property.TextAlignment;
 import com.itextpdf.layout.property.UnitValue;
 
 import java.io.FileNotFoundException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 
 public class Bill extends AppCompatActivity implements View.OnClickListener {
     TextView tv_meter_no, tv_ca_no, tv_name;
@@ -96,7 +100,7 @@ public class Bill extends AppCompatActivity implements View.OnClickListener {
             Cursor c = db.rawQuery("SELECT * FROM bill_details WHERE meter_no='" + meter + "'", null);
             if (c.moveToFirst()) {
                 db.execSQL("UPDATE bill_details SET curr_reading='" + meter_reading.getText() + "'WHERE meter_no='" + meter +"' ");
-                    showMessage("Success", "Record Modified");
+                showMessage("Success", "Record Modified");
 
                 //Calculation----> Kaushal
 
@@ -117,7 +121,7 @@ public class Bill extends AppCompatActivity implements View.OnClickListener {
                     Toast.makeText(getApplicationContext(),"unit diff"+unit,Toast.LENGTH_SHORT).show();
                     double billAmount = calculateElectricityBill(unit);
                     Toast.makeText(getApplicationContext(),"Amt"+billAmount,Toast.LENGTH_SHORT).show();
-                    
+
                     try {
                         // Assuming db is your SQLiteDatabase instance
                         String total = String.valueOf(billAmount);
@@ -131,7 +135,7 @@ public class Bill extends AppCompatActivity implements View.OnClickListener {
                     } catch (SQLException e) {
                         // Handle the exception appropriately (e.g., log or show an error message)
                         e.printStackTrace();
-                }
+                    }
 
                 }else {
                     showMessage("Error", "Invalid Meter Number");
@@ -163,7 +167,7 @@ public class Bill extends AppCompatActivity implements View.OnClickListener {
     private void generatePDF() {
 
         if (meter.toString().trim().length() == 0) {
-            showMessage("Error", "Please enter Rollno");
+            showMessage("Error", "Please enter meter no.");
             return;
         }
         Cursor c = db.rawQuery("SELECT * FROM customers WHERE meter_no='" + meter + "'", null);
@@ -191,6 +195,16 @@ public class Bill extends AppCompatActivity implements View.OnClickListener {
             showMessage("Error", "Invalid Meter Number");
             clearText();
         }
+
+        //Creating Bill No.
+        Calendar calendar = Calendar.getInstance();
+        Date currentDate = calendar.getTime();
+
+        // Define the date format with the last two digits of the year
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMdd", Locale.getDefault());
+        String date= currentDate.toString();
+        // Format the date into a string
+        String bill_no = dateFormat.format(currentDate);
 
         String pdfPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/example.pdf";
         try {
@@ -298,8 +312,8 @@ public class Bill extends AppCompatActivity implements View.OnClickListener {
             Paragraph BDValue = new Paragraph();
             Paragraph BTValue = new Paragraph();
             Paragraph MRValue = new Paragraph();
-            BNValue.add("1234");
-            BDValue.add("28/02/2024");
+            BNValue.add(bill_no);
+            BDValue.add(date);
             BTValue.add("12:45 PM");
             MRValue.add("abc@gmail.com");
 

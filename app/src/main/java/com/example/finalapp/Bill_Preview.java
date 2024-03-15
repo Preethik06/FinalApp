@@ -47,6 +47,20 @@ public class Bill_Preview extends AppCompatActivity {
                 .enableSwipe(true) // Allows to swipe pages horizontally
                 .load();
 
+    }
+}
+
+
+
+
+        /*{// Get the PDF file path from the intent
+        String filePath = getIntent().getStringExtra("PDF_PATH");
+
+        // Load and display the PDF file
+        pdfView.fromFile(new File(filePath))
+                .enableSwipe(true) // Allows to swipe pages horizontally
+                .load();
+
         btnPrint.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -71,4 +85,4 @@ public class Bill_Preview extends AppCompatActivity {
             }
         });
     }
-}
+}*/
